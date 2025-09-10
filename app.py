@@ -2,6 +2,7 @@ import pickle
 import streamlit as st
 import requests
 import os
+import io
 import time
 
 # =========================
@@ -14,35 +15,12 @@ st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wid
 # =========================
 st.markdown("""
 <style>
-body {
-    background-color: #121212;
-    color: #ffffff;
-    font-family: 'Trebuchet MS', sans-serif;
-}
-h1 {
-    color: #ff6f61;
-    text-align: center;
-}
-.stButton>button {
-    background-color: #ff6f61;
-    color: white;
-    font-weight: bold;
-    border-radius: 10px;
-    padding: 0.6rem 1rem;
-    transition: all 0.3s ease;
-}
-.stButton>button:hover {
-    background-color: #ff4c3b;
-}
-.stText {
-    font-size: 16px;
-    font-weight: bold;
-    text-align: center;
-}
-.stImage img {
-    border-radius: 15px;
-    box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
-}
+body { background-color: #121212; color: #ffffff; font-family: 'Trebuchet MS', sans-serif; }
+h1 { color: #ff6f61; text-align: center; }
+.stButton>button { background-color: #ff6f61; color: white; font-weight: bold; border-radius: 10px; padding: 0.6rem 1rem; transition: all 0.3s ease; }
+.stButton>button:hover { background-color: #ff4c3b; }
+.stText { font-size: 16px; font-weight: bold; text-align: center; }
+.stImage img { border-radius: 15px; box-shadow: 0px 5px 15px rgba(0,0,0,0.5); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -54,23 +32,42 @@ st.title("🎬 Movie Recommender System")
 MOVIES_URL = "https://drive.google.com/uc?export=download&id=1BjOlqZBEzu4OURzgGpdmySc3oF33DGxW"
 SIMILARITY_URL = "https://drive.google.com/uc?export=download&id=1rcTm8ewOzWXGEe5blo9yjxEA065MSx5A"
 
-def download_file(url, filename):
-    if not os.path.exists(filename):
-        with st.spinner(f"Downloading {filename} ..."):
-            r = requests.get(url)
-            with open(filename, "wb") as f:
-                f.write(r.content)
+def download_pickle(url, filename):
+    """Download a pickle file from Google Drive, validate it, and save locally."""
+    if os.path.exists(filename):
+        return filename  # already exists
 
-download_file(MOVIES_URL, "movies.pkl")
-download_file(SIMILARITY_URL, "similarity.pkl")
+    with st.spinner(f"Downloading {filename} ..."):
+        try:
+            r = requests.get(url, timeout=15)
+            r.raise_for_status()
+        except Exception as e:
+            st.error(f"Failed to download {filename}: {e}")
+            return None
+
+        # Validate content: should start with b'\x80' for pickle
+        if not r.content.startswith(b'\x80'):
+            st.error(f"{filename} download is not a valid pickle file. Check your URL or file sharing settings.")
+            return None
+
+        with open(filename, "wb") as f:
+            f.write(r.content)
+
+    return filename
+
+movies_file = download_pickle(MOVIES_URL, "movies.pkl")
+similarity_file = download_pickle(SIMILARITY_URL, "similarity.pkl")
+
+if not movies_file or not similarity_file:
+    st.stop()
 
 # =========================
 # LOAD DATA
 # =========================
-with open("movies.pkl", "rb") as f:
+with open(movies_file, "rb") as f:
     movies = pickle.load(f)
 
-with open("similarity.pkl", "rb") as f:
+with open(similarity_file, "rb") as f:
     similarity = pickle.load(f)
 
 # =========================
@@ -126,6 +123,3 @@ if st.button("Recommend"):
             with col:
                 st.text(names[i])
                 st.image(posters[i], use_container_width=True)
-
-
-
