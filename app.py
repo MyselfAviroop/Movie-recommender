@@ -52,7 +52,7 @@ st.title("🎬 Movie Recommender System")
 # GOOGLE DRIVE PICKLE FILES
 # =========================
 MOVIES_URL = "https://drive.google.com/uc?export=download&id=1BjOlqZBEzu4OURzgGpdmySc3oF33DGxW"
-SIMILARITY_URL = "SIMILARITY_URL = "https://drive.google.com/uc?export=download&id=1rcTm8ewOzWXGEe5blo9yjxEA065MSx5A"
+SIMILARITY_URL = "https://drive.google.com/uc?export=download&id=1rcTm8ewOzWXGEe5blo9yjxEA065MSx5A"
 
 def download_file(url, filename):
     if not os.path.exists(filename):
@@ -126,5 +126,6 @@ if st.button("Recommend"):
             with col:
                 st.text(names[i])
                 st.image(posters[i], use_container_width=True)
+
 
 
