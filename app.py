@@ -4,6 +4,7 @@ import requests
 import os
 import io
 import time
+import gdown  # Add this import
 
 # =========================
 # PAGE CONFIG
@@ -29,71 +30,126 @@ st.title("🎬 Movie Recommender System")
 # =========================
 # GOOGLE DRIVE PICKLE FILES
 # =========================
-MOVIES_URL = "https://drive.google.com/uc?export=download&id=1BjOlqZBEzu4OURzgGpdmySc3oF33DGxW"
-SIMILARITY_URL = "https://drive.google.com/uc?export=download&id=1rcTm8ewOzWXGEe5blo9yjxEA065MSx5A"
+MOVIES_ID = "1BjOlqZBEzu4OURzgGpdmySc3oF33DGxW"  # Extracted file ID
+SIMILARITY_ID = "1rcTm8ewOzWXGEe5blo9yjxEA065MSx5A"  # Extracted file ID
 
-def download_pickle(url, filename):
-    """Download a pickle file from Google Drive, validate it, and save locally."""
+def download_pickle(gdrive_id, filename):
+    """Download a pickle file from Google Drive using gdown, validate it, and save locally."""
     if os.path.exists(filename):
-        return filename  # already exists
-
-    with st.spinner(f"Downloading {filename} ..."):
+        # Quick validation for existing file
         try:
-            r = requests.get(url, timeout=15)
-            r.raise_for_status()
+            with open(filename, "rb") as f:
+                if f.read(10).startswith(b'\x80'):
+                    return filename
+                else:
+                    os.remove(filename)  # Invalid, remove it
+        except:
+            pass
+
+    with st.spinner(f"Downloading {filename} from Google Drive..."):
+        try:
+            url = f"https://drive.google.com/uc?id={gdrive_id}"
+            gdown.download(url, filename, quiet=False)
         except Exception as e:
-            st.error(f"Failed to download {filename}: {e}")
+            st.error(f"Failed to download {filename} using gdown: {e}. Ensure the file is publicly shared.")
             return None
 
         # Validate content: should start with b'\x80' for pickle
-        if not r.content.startswith(b'\x80'):
-            st.error(f"{filename} download is not a valid pickle file. Check your URL or file sharing settings.")
+        try:
+            with open(filename, "rb") as f:
+                if not f.read(10).startswith(b'\x80'):
+                    os.remove(filename)  # Remove invalid file
+                    st.error(f"{filename} is not a valid pickle file. Check file integrity or sharing settings.")
+                    return None
+        except Exception as e:
+            st.error(f"Validation failed for {filename}: {e}")
+            if os.path.exists(filename):
+                os.remove(filename)
             return None
-
-        with open(filename, "wb") as f:
-            f.write(r.content)
 
     return filename
 
-movies_file = download_pickle(MOVIES_URL, "movies.pkl")
-similarity_file = download_pickle(SIMILARITY_URL, "similarity.pkl")
+# Try downloading; fallback to manual upload if fails
+movies_file = download_pickle(MOVIES_ID, "movies.pkl")
+similarity_file = download_pickle(SIMILARITY_ID, "similarity.pkl")
 
 if not movies_file or not similarity_file:
-    st.stop()
+    st.warning("Downloads failed. Please upload the pickle files manually.")
+    uploaded_movies = st.file_uploader("Upload movies.pkl", type="pkl")
+    uploaded_similarity = st.file_uploader("Upload similarity.pkl", type="pkl")
+    
+    if uploaded_movies and uploaded_similarity:
+        # Save uploaded files temporarily
+        movies_file = "movies_uploaded.pkl"
+        with open(movies_file, "wb") as f:
+            f.write(uploaded_movies.getbuffer())
+        
+        similarity_file = "similarity_uploaded.pkl"
+        with open(similarity_file, "wb") as f:
+            f.write(uploaded_similarity.getbuffer())
+        
+        # Validate uploads
+        with open(movies_file, "rb") as f:
+            if not f.read(10).startswith(b'\x80'):
+                st.error("Uploaded movies.pkl is invalid.")
+                st.stop()
+        with open(similarity_file, "rb") as f:
+            if not f.read(10).startswith(b'\x80'):
+                st.error("Uploaded similarity.pkl is invalid.")
+                st.stop()
+    else:
+        st.stop()
 
 # =========================
 # LOAD DATA
 # =========================
-with open(movies_file, "rb") as f:
-    movies = pickle.load(f)
+try:
+    with open(movies_file, "rb") as f:
+        movies = pickle.load(f)
+    st.success("Movies data loaded successfully!")
+except Exception as e:
+    st.error(f"Failed to load movies.pkl: {e}")
+    st.stop()
 
-with open(similarity_file, "rb") as f:
-    similarity = pickle.load(f)
+try:
+    with open(similarity_file, "rb") as f:
+        similarity = pickle.load(f)
+    st.success("Similarity data loaded successfully!")
+except Exception as e:
+    st.error(f"Failed to load similarity.pkl: {e}")
+    st.stop()
 
 # =========================
 # OMDb CONFIG
 # =========================
-OMDB_API_KEY = "b95f82c7"
+OMDB_API_KEY = "b95f82c7"  # Replace with your actual API key if needed
 DEFAULT_POSTER = "https://via.placeholder.com/500x750?text=No+Poster"
 
 def fetch_poster(title, retries=3):
     for attempt in range(retries):
         try:
-            url = f"http://www.omdbapi.com/?t={title}&apikey={OMDB_API_KEY}"
+            # URL-encode title to handle special characters
+            encoded_title = requests.utils.quote(title)
+            url = f"http://www.omdbapi.com/?t={encoded_title}&apikey={OMDB_API_KEY}"
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             data = response.json()
-            poster = data.get("Poster")
-            if poster and poster != "N/A":
-                return poster
+            if data.get("Response") == "True":
+                poster = data.get("Poster")
+                if poster and poster != "N/A":
+                    return poster
             return DEFAULT_POSTER
-        except:
+        except Exception:
             time.sleep(1)
     return DEFAULT_POSTER
 
 # =========================
 # SELECT MOVIE
 # =========================
+if 'title' not in movies.columns:
+    st.error("Movies DataFrame missing 'title' column. Check data structure.")
+    st.stop()
+
 movie_list = movies['title'].values
 selected_movie = st.selectbox("Select a movie", movie_list)
 
@@ -101,16 +157,20 @@ selected_movie = st.selectbox("Select a movie", movie_list)
 # RECOMMENDATION FUNCTION
 # =========================
 def recommend(movie):
-    idx = movies[movies['title'] == movie].index[0]
-    distances = similarity[idx]
-    top_indices = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
+    try:
+        idx = movies[movies['title'] == movie].index[0]
+        distances = similarity[idx]
+        top_indices = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
 
-    recommended_movies = []
-    recommended_posters = []
-    for i, _ in top_indices:
-        recommended_movies.append(movies.iloc[i].title)
-        recommended_posters.append(fetch_poster(movies.iloc[i].title))
-    return recommended_movies, recommended_posters
+        recommended_movies = []
+        recommended_posters = []
+        for i, _ in top_indices:
+            recommended_movies.append(movies.iloc[i].title)
+            recommended_posters.append(fetch_poster(movies.iloc[i].title))
+        return recommended_movies, recommended_posters
+    except Exception as e:
+        st.error(f"Recommendation error: {e}")
+        return [], []
 
 # =========================
 # DISPLAY RECOMMENDATIONS
@@ -118,8 +178,11 @@ def recommend(movie):
 if st.button("Recommend"):
     with st.spinner("Fetching recommendations and posters..."):
         names, posters = recommend(selected_movie)
-        cols = st.columns(5)
-        for i, col in enumerate(cols):
-            with col:
-                st.text(names[i])
-                st.image(posters[i], use_container_width=True)
+        if names:
+            cols = st.columns(5)
+            for i, col in enumerate(cols):
+                with col:
+                    st.text(names[i])
+                    st.image(posters[i], use_container_width=True)
+        else:
+            st.warning("No recommendations generated. Check data.")
