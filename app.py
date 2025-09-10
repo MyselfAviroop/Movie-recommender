@@ -8,13 +8,52 @@ import time
 # PAGE CONFIG
 # =========================
 st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
+
+# =========================
+# CUSTOM CSS STYLING
+# =========================
+st.markdown("""
+<style>
+body {
+    background-color: #121212;
+    color: #ffffff;
+    font-family: 'Trebuchet MS', sans-serif;
+}
+h1 {
+    color: #ff6f61;
+    text-align: center;
+}
+.stButton>button {
+    background-color: #ff6f61;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+    transition: all 0.3s ease;
+}
+.stButton>button:hover {
+    background-color: #ff4c3b;
+}
+.stText {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+}
+.stImage img {
+    border-radius: 15px;
+    box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.title("🎬 Movie Recommender System")
 
 # =========================
-# GOOGLE DRIVE FILES
+# GOOGLE DRIVE PICKLE FILES
 # =========================
-MOVIES_URL ="https://drive.google.com/file/d/1g3k7EtVxNeakNcJ4otAvSol219UYcLw-/view?usp=drive_link"
+MOVIES_URL = "https://drive.google.com/file/d/1g3k7EtVxNeakNcJ4otAvSol219UYcLw-/view?usp=drive_link"
 SIMILARITY_URL = "https://drive.google.com/file/d/1g3k7EtVxNeakNcJ4otAvSol219UYcLw-/view?usp=drive_link"
+
 def download_file(url, filename):
     if not os.path.exists(filename):
         with st.spinner(f"Downloading {filename} ..."):
@@ -28,8 +67,11 @@ download_file(SIMILARITY_URL, "similarity.pkl")
 # =========================
 # LOAD DATA
 # =========================
-movies = pickle.load(open("movies.pkl", "rb"))
-similarity = pickle.load(open("similarity.pkl", "rb"))
+with open("movies.pkl", "rb") as f:
+    movies = pickle.load(f)
+
+with open("similarity.pkl", "rb") as f:
+    similarity = pickle.load(f)
 
 # =========================
 # OMDb CONFIG
