@@ -69,7 +69,8 @@ st.markdown(f"""
 }}
 
 /* Netflix-style Center Box */
-.recommend-box {{
+.recommend-box {{position:absolute;
+top:50%;
     z-index: 1;
     background: rgba(20,20,20,0.75);
     padding: 25px;
@@ -221,3 +222,4 @@ if get_reco:
                 st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
     else:
         st.warning("No recommendations available.")
+
