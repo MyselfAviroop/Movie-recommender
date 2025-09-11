@@ -189,3 +189,4 @@ if st.button("🎥 Get Recommendations"):
         with col:
             st.image(posters[i], use_container_width=True)
             st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
+
