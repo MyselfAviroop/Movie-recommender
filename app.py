@@ -2,13 +2,24 @@ import pickle
 import streamlit as st
 import requests
 import os
-import time
 import gdown  
+import base64  # ✅ Add this for base64 encoding
 
 # =========================
 # PAGE CONFIG
 # =========================
 st.set_page_config(page_title="CineMatch", page_icon="🎬", layout="wide")
+
+# =========================
+# LOAD BACKGROUND IMAGE AS BASE64
+# =========================
+def get_base64_of_image(image_file):
+    with open(image_file, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+# ✅ Change the filename to match your uploaded file
+bg_base64 = get_base64_of_image("netflix-background-gs7hjuwvv2g0e9fj.jpg")
 
 # =========================
 # CUSTOM CSS (NETFLIX-STYLE)
@@ -17,7 +28,7 @@ st.markdown(f"""
 <style>
 /* Fullscreen Hero Background */
 .hero {{
-    background-image: url("netflix-background-gs7hjuwvv2g0e9fj.jpg"); 
+    background-image: url("data:image/jpg;base64,{bg_base64}");
     background-size: cover;
     background-position: center;
     height: 100vh;
@@ -27,8 +38,9 @@ st.markdown(f"""
     align-items: center;
     text-align: center;
     color: white;
-    backdrop-filter: brightness(0.6);
-    margin: -3rem -3rem 2rem -3rem;
+    backdrop-filter: brightness(0.5);
+    margin: -3rem -3rem 0 -3rem;
+    padding: 2rem;
 }}
 
 /* Title Styling */
@@ -39,20 +51,30 @@ st.markdown(f"""
     margin-bottom: 1rem;
 }}
 .hero p {{
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     max-width: 700px;
     text-shadow: 1px 1px 6px rgba(0,0,0,0.8);
+    margin-bottom: 1.5rem;
+}}
+
+/* Dropdown + Button Wrapper */
+.recommend-box {{
+    background: rgba(0,0,0,0.65);
+    padding: 1.5rem;
+    border-radius: 10px;
+    display: inline-block;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }}
 
 /* Button Styling */
 .hero-btn {{
-    margin-top: 1.5rem;
+    margin-top: 1rem;
     background-color: #E50914;
     color: white;
     font-weight: 700;
     font-size: 18px;
     border-radius: 8px;
-    padding: 0.8rem 2rem;
+    padding: 0.6rem 1.8rem;
     text-decoration: none;
     display: inline-block;
     transition: all 0.3s ease;
@@ -61,29 +83,7 @@ st.markdown(f"""
     background-color: #f40612;
     transform: scale(1.05);
 }}
-
-/* Recommendation Section Styling */
-.section-title {{
-    color: #FF6F61;
-    text-align: center;
-    font-weight: bold;
-    font-size: 1.8rem;
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-}}
 </style>
-""", unsafe_allow_html=True)
-
-# =========================
-# HERO SECTION
-# =========================
-st.markdown("""
-<div class="hero">
-    <h1>🎬 CineMatch</h1>
-    <p>Unlimited movie recommendations based on your favorites.  
-    Powered by ML and live poster fetching.</p>
-    <a href="#recommender" class="hero-btn">Get Started</a>
-</div>
 """, unsafe_allow_html=True)
 
 # =========================
@@ -163,30 +163,44 @@ def fetch_poster(title):
     return DEFAULT_POSTER
 
 # =========================
-# RECOMMENDER SECTION
+# HERO SECTION WITH DROPDOWN
 # =========================
-st.markdown('<div id="recommender"></div>', unsafe_allow_html=True)
-st.markdown('<h2 class="section-title">🔍 Find Your Next Movie</h2>', unsafe_allow_html=True)
+st.markdown('<div class="hero">', unsafe_allow_html=True)
+st.markdown("<h1>🎬 CineMatch</h1>", unsafe_allow_html=True)
+st.markdown("<p>Find your next favorite movie instantly — just pick one you like.</p>", unsafe_allow_html=True)
 
 movie_list = movies['title'].values
-selected_movie = st.selectbox("Choose a movie you like:", movie_list)
+selected_movie = st.selectbox("Choose a movie you like:", movie_list, key="hero-dropdown", label_visibility="collapsed")
 
-def recommend(movie):
-    idx = movies[movies['title'] == movie].index[0]
+if st.button("🎥 Get Recommendations", key="hero-button"):
+    names, posters = [], []
+    idx = movies[movies['title'] == selected_movie].index[0]
     distances = similarity[idx]
     top_indices = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
-    recommended_movies, recommended_posters = [], []
     for i, _ in top_indices:
-        recommended_movies.append(movies.iloc[i].title)
-        recommended_posters.append(fetch_poster(movies.iloc[i].title))
-    return recommended_movies, recommended_posters
+        names.append(movies.iloc[i].title)
+        posters.append(fetch_poster(movies.iloc[i].title))
 
-if st.button("🎥 Get Recommendations"):
-    names, posters = recommend(selected_movie)
-    st.markdown("<h3 style='text-align:center;'>Recommended for You</h3>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)  # close hero div
+    st.markdown("<h3 style='text-align:center; margin-top:2rem;'>Recommended for You</h3>", unsafe_allow_html=True)
     cols = st.columns(len(names))
     for i, col in enumerate(cols):
         with col:
             st.image(posters[i], use_container_width=True)
             st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
+else:
+    st.markdown("</div>", unsafe_allow_html=True)  # close hero div
+
+
+
+
+
+
+
+
+
+
+
+
+
 
