@@ -36,21 +36,7 @@ st.markdown(f"""
     padding-bottom: 0 !important;
 }}
 
-.hero {{
-    position: relative;
-    width: 100%;
-    height: 100vh; /* ✅ takes entire screen height */
-    background-image: url("data:image/jpg;base64,{bg_base64}");
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;  /* ✅ centers vertically */
-    align-items: center;      /* ✅ centers horizontally */
-    text-align: center;
-    margin: 0; /* ✅ removes extra top spacing */
-    padding: 0;
-}}
+
 
 .hero::before {{
     content: "";
@@ -230,6 +216,7 @@ if get_reco:
                 st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
     else:
         st.warning("No recommendations available.")
+
 
 
 
