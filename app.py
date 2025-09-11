@@ -38,31 +38,6 @@ st.markdown(f"""
 
 
 
-.hero::before {{
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 0;
-}}
-.hero h1 {{
-    font-size: 3.2rem;
-    font-weight: 900;
-    color: white;
-    z-index: 1;
-    margin-bottom: 0.5rem;
-    text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
-}}
-.hero p {{
-    font-size: 1.3rem;
-    color: #f5f5f5;
-    z-index: 1;
-    margin-bottom: 1.5rem;
-    max-width: 600px;
-    text-shadow: 1px 1px 8px rgba(0,0,0,0.9);
-}}
-
-/* Netflix-style Center Box */
 
 /* Dropdown Styling */
 .stSelectbox > div > div {{
@@ -202,6 +177,7 @@ if get_reco:
                 st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
     else:
         st.warning("No recommendations available.")
+
 
 
 
