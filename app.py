@@ -4,7 +4,7 @@ import requests
 import os
 import time
 import gdown
-
+import base64 
 # =========================
 # PAGE CONFIG
 # =========================
@@ -216,3 +216,4 @@ if st.button("🎥 Get Recommendations"):
         st.warning("No recommendations available.")
 else:
     st.markdown("</div></div>", unsafe_allow_html=True)
+
