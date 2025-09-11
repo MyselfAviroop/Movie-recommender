@@ -4,7 +4,8 @@ import requests
 import os
 import time
 import gdown
-import base64 
+import base64  # ✅ REQUIRED for base64 encoding
+
 # =========================
 # PAGE CONFIG
 # =========================
@@ -18,57 +19,60 @@ def get_base64_of_image(image_file):
         data = f.read()
     return base64.b64encode(data).decode()
 
-# ✅ Change the filename to match your uploaded file
+# ✅ Use your uploaded file here
 bg_base64 = get_base64_of_image("netflix-background-gs7hjuwvv2g0e9fj.jpg")
+
 # =========================
 # CUSTOM STYLING
 # =========================
-st.markdown("""
+st.markdown(f"""
 <style>
 /* ===== Remove default padding ===== */
-.main .block-container {
+.main .block-container {{
     padding: 0;
     margin: 0;
-}
+}}
 
 /* ===== Hero Section Styling ===== */
-.hero {
+.hero {{
     position: relative;
     width: 100%;
     height: 100vh;
     background-image: url("data:image/jpg;base64,{bg_base64}");
+    background-size: cover;
+    background-position: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-}
-.hero::before {
+}}
+.hero::before {{
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.6);
     z-index: 0;
-}
-.hero h1 {
+}}
+.hero h1 {{
     font-size: 3.2rem;
     font-weight: 900;
     color: white;
     z-index: 1;
     margin-bottom: 0.5rem;
     text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
-}
-.hero p {
+}}
+.hero p {{
     font-size: 1.3rem;
     color: #f5f5f5;
     z-index: 1;
     margin-bottom: 1rem;
     max-width: 600px;
     text-shadow: 1px 1px 8px rgba(0,0,0,0.9);
-}
+}}
 
 /* ===== Recommendation Box ===== */
-.recommend-box {
+.recommend-box {{
     z-index: 1;
     background: rgba(20,20,20,0.8);
     padding: 20px;
@@ -77,17 +81,17 @@ st.markdown("""
     width: 90%;
     max-width: 500px;
     margin-top: 10px;
-}
+}}
 
 /* ===== Dropdown Styling ===== */
-.stSelectbox > div > div {
+.stSelectbox > div > div {{
     background-color: #222;
     border-radius: 8px;
     color: white;
-}
+}}
 
 /* ===== Button Styling ===== */
-.stButton>button {
+.stButton>button {{
     background-color: #E50914;
     color: white;
     font-weight: bold;
@@ -95,11 +99,11 @@ st.markdown("""
     font-size: 18px;
     padding: 0.6rem 1.5rem;
     transition: all 0.2s ease-in-out;
-}
-.stButton>button:hover {
+}}
+.stButton>button:hover {{
     background-color: #f40612;
     transform: scale(1.05);
-}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -216,4 +220,3 @@ if st.button("🎥 Get Recommendations"):
         st.warning("No recommendations available.")
 else:
     st.markdown("</div></div>", unsafe_allow_html=True)
-
