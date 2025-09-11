@@ -63,20 +63,6 @@ st.markdown(f"""
 }}
 
 /* Netflix-style Center Box */
-.recommend-box {{
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(20,20,20,0.8);
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.7);
-    width: 90%;
-    max-width: 500px;
-    text-align: center;
-    z-index: 2;
-}}
 
 /* Dropdown Styling */
 .stSelectbox > div > div {{
@@ -216,6 +202,7 @@ if get_reco:
                 st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
     else:
         st.warning("No recommendations available.")
+
 
 
 
