@@ -19,7 +19,6 @@ def get_base64_of_image(image_file):
         data = f.read()
     return base64.b64encode(data).decode()
 
-# ✅ Use your uploaded file here
 bg_base64 = get_base64_of_image("netflix-background-gs7hjuwvv2g0e9fj.jpg")
 
 # =========================
@@ -27,13 +26,11 @@ bg_base64 = get_base64_of_image("netflix-background-gs7hjuwvv2g0e9fj.jpg")
 # =========================
 st.markdown(f"""
 <style>
-/* ===== Remove default padding ===== */
 .main .block-container {{
     padding: 0;
     margin: 0;
 }}
 
-/* ===== Hero Section Styling ===== */
 .hero {{
     position: relative;
     width: 100%;
@@ -66,43 +63,47 @@ st.markdown(f"""
     font-size: 1.3rem;
     color: #f5f5f5;
     z-index: 1;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     max-width: 600px;
     text-shadow: 1px 1px 8px rgba(0,0,0,0.9);
 }}
 
-/* ===== Recommendation Box ===== */
+/* Netflix-style Center Box */
 .recommend-box {{
     z-index: 1;
-    background: rgba(20,20,20,0.8);
-    padding: 20px;
+    background: rgba(20,20,20,0.75);
+    padding: 25px;
     border-radius: 12px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.7);
     width: 90%;
     max-width: 500px;
-    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
 }}
 
-/* ===== Dropdown Styling ===== */
+/* Dropdown Styling */
 .stSelectbox > div > div {{
     background-color: #222;
     border-radius: 8px;
     color: white;
 }}
 
-/* ===== Button Styling ===== */
+/* Full width button */
 .stButton>button {{
     background-color: #E50914;
     color: white;
     font-weight: bold;
     border-radius: 6px;
     font-size: 18px;
-    padding: 0.6rem 1.5rem;
+    padding: 0.7rem 1.5rem;
+    width: 100%;
     transition: all 0.2s ease-in-out;
 }}
 .stButton>button:hover {{
     background-color: #f40612;
-    transform: scale(1.05);
+    transform: scale(1.03);
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -114,7 +115,6 @@ MOVIES_ID = "1BjOlqZBEzu4OURzgGpdmySc3oF33DGxW"
 SIMILARITY_ID = "1rcTm8ewOzWXGEe5blo9yjxEA065MSx5A"
 
 def download_pickle(gdrive_id, filename):
-    """Download and validate pickle from Google Drive."""
     if os.path.exists(filename):
         try:
             with open(filename, "rb") as f:
@@ -201,14 +201,17 @@ def recommend(movie):
 st.markdown('<div class="hero">', unsafe_allow_html=True)
 st.markdown("<h1>🍿 CineMatch</h1>", unsafe_allow_html=True)
 st.markdown("<p>Find your next favorite movie instantly — just pick one you like.</p>", unsafe_allow_html=True)
-st.markdown('<div class="recommend-box">', unsafe_allow_html=True)
 
+# ✅ This box is now centered with flexbox and styled
+st.markdown('<div class="recommend-box">', unsafe_allow_html=True)
 movie_list = movies['title'].values
 selected_movie = st.selectbox("Choose a movie", movie_list, key="hero-dropdown", label_visibility="collapsed")
+get_reco = st.button("🎥 Get Recommendations")
+st.markdown('</div>', unsafe_allow_html=True)  # close recommend-box
+st.markdown('</div>', unsafe_allow_html=True)  # close hero
 
-if st.button("🎥 Get Recommendations"):
+if get_reco:
     names, posters = recommend(selected_movie)
-    st.markdown("</div></div>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align:center; margin-top:2rem;'>Recommended for You</h3>", unsafe_allow_html=True)
     if names:
         cols = st.columns(len(names))
@@ -218,5 +221,3 @@ if st.button("🎥 Get Recommendations"):
                 st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
     else:
         st.warning("No recommendations available.")
-else:
-    st.markdown("</div></div>", unsafe_allow_html=True)
