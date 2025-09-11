@@ -8,67 +8,86 @@ import gdown
 # =========================
 # PAGE CONFIG
 # =========================
-st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
+st.set_page_config(page_title="CineMatch", page_icon="🎬", layout="wide")
 
 # =========================
-# CUSTOM CSS
+# CUSTOM CSS (NETFLIX-STYLE)
 # =========================
-st.markdown("""
+st.markdown(f"""
 <style>
-body, .block-container {
-    background-color: #121212;
-    color: #E0E0E0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-h1, h2, h3 {
-    color: #FF6F61;
+/* Fullscreen Hero Background */
+.hero {{
+    background-image: url("netflix-background-gs7hjuwvv2g0e9fj.jpg"); 
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     text-align: center;
-    font-weight: 700;
+    color: white;
+    backdrop-filter: brightness(0.6);
+    margin: -3rem -3rem 2rem -3rem;
+}}
+
+/* Title Styling */
+.hero h1 {{
+    font-size: 3rem;
+    font-weight: 900;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.7);
     margin-bottom: 1rem;
-}
-.stButton>button {
-    background-color: #FF6F61;
+}}
+.hero p {{
+    font-size: 1.5rem;
+    max-width: 700px;
+    text-shadow: 1px 1px 6px rgba(0,0,0,0.8);
+}}
+
+/* Button Styling */
+.hero-btn {{
+    margin-top: 1.5rem;
+    background-color: #E50914;
     color: white;
     font-weight: 700;
-    border-radius: 12px;
-    padding: 0.7rem 1.2rem;
-    font-size: 16px;
+    font-size: 18px;
+    border-radius: 8px;
+    padding: 0.8rem 2rem;
+    text-decoration: none;
+    display: inline-block;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 111, 97, 0.4);
-}
-.stButton>button:hover {
-    background-color: #FF4C3B;
-    transform: translateY(-2px);
-}
-.stImage img {
-    border-radius: 15px;
-    box-shadow: 0px 5px 20px rgba(0,0,0,0.7);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.stImage img:hover {
+}}
+.hero-btn:hover {{
+    background-color: #f40612;
     transform: scale(1.05);
-    box-shadow: 0px 10px 30px rgba(255,111,97,0.6);
-}
+}}
+
+/* Recommendation Section Styling */
+.section-title {{
+    color: #FF6F61;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.8rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}}
 </style>
 """, unsafe_allow_html=True)
 
 # =========================
-# HEADER SECTION (HOME PAGE)
+# HERO SECTION
 # =========================
-st.markdown(
-    """
-    <div style='text-align:center; padding: 2rem;'>
-        <h1>🎬 Movie Recommender System</h1>
-        <p style='font-size:18px; max-width:700px; margin:auto;'>
-        Your personalized movie discovery engine — explore new favorites based on what you love.
-        Powered by ML similarity scores and live poster fetching from OMDb API.
-        </p>
-    </div>
-    """, unsafe_allow_html=True
-)
+st.markdown("""
+<div class="hero">
+    <h1>🎬 CineMatch</h1>
+    <p>Unlimited movie recommendations based on your favorites.  
+    Powered by ML and live poster fetching.</p>
+    <a href="#recommender" class="hero-btn">Get Started</a>
+</div>
+""", unsafe_allow_html=True)
 
 # =========================
-# LOAD PICKLE FILES
+# GOOGLE DRIVE PICKLE FILES
 # =========================
 MOVIES_ID = "1BjOlqZBEzu4OURzgGpdmySc3oF33DGxW"
 SIMILARITY_ID = "1rcTm8ewOzWXGEe5blo9yjxEA065MSx5A"
@@ -83,7 +102,7 @@ def download_pickle(gdrive_id, filename):
                     os.remove(filename)
         except:
             pass
-    with st.spinner(f"Downloading {filename} from Google Drive..."):
+    with st.spinner(f"Downloading {filename}..."):
         try:
             url = f"https://drive.google.com/uc?id={gdrive_id}"
             gdown.download(url, filename, quiet=False)
@@ -94,7 +113,6 @@ def download_pickle(gdrive_id, filename):
             with open(filename, "rb") as f:
                 if not f.read(10).startswith(b'\x80'):
                     os.remove(filename)
-                    st.error(f"{filename} is not a valid pickle file.")
                     return None
         except:
             return None
@@ -145,9 +163,11 @@ def fetch_poster(title):
     return DEFAULT_POSTER
 
 # =========================
-# MAIN RECOMMENDER SECTION
+# RECOMMENDER SECTION
 # =========================
-st.subheader("🔍 Find Your Next Movie")
+st.markdown('<div id="recommender"></div>', unsafe_allow_html=True)
+st.markdown('<h2 class="section-title">🔍 Find Your Next Movie</h2>', unsafe_allow_html=True)
+
 movie_list = movies['title'].values
 selected_movie = st.selectbox("Choose a movie you like:", movie_list)
 
