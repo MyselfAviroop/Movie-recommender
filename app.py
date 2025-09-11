@@ -90,8 +90,7 @@ st.markdown(f"""
     max-width: 500px;
     text-align: center;
     z-index: 2;
-}
-}
+}}
 
 /* Dropdown Styling */
 .stSelectbox > div > div {{
@@ -231,6 +230,7 @@ if get_reco:
                 st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
     else:
         st.warning("No recommendations available.")
+
 
 
 
