@@ -30,16 +30,14 @@ st.markdown(f"""
     padding: 0;
     margin: 0;
 }}
-/* Remove Streamlit top padding completely */
+
 .main .block-container {{
     padding-top: 0 !important;
     padding-bottom: 0 !important;
+     background-image: url("data:image/jpg;base64,{bg_base64}");
 }}
 
 
-.body{{
- background-image: url("data:image/jpg;base64,{bg_base64}");
-}}
 
 /* Dropdown Styling */
 .stSelectbox > div > div {{
@@ -179,6 +177,7 @@ if get_reco:
                 st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
     else:
         st.warning("No recommendations available.")
+
 
 
 
