@@ -2,13 +2,13 @@ import pickle
 import streamlit as st
 import requests
 import os
-import gdown  
-import base64  # ✅ Add this for base64 encoding
+import time
+import gdown
 
 # =========================
 # PAGE CONFIG
 # =========================
-st.set_page_config(page_title="CineMatch", page_icon="🎬", layout="wide")
+st.set_page_config(page_title="CineMatch", page_icon="🍿", layout="wide")
 
 # =========================
 # LOAD BACKGROUND IMAGE AS BASE64
@@ -20,69 +20,86 @@ def get_base64_of_image(image_file):
 
 # ✅ Change the filename to match your uploaded file
 bg_base64 = get_base64_of_image("netflix-background-gs7hjuwvv2g0e9fj.jpg")
-
 # =========================
-# CUSTOM CSS (NETFLIX-STYLE)
+# CUSTOM STYLING
 # =========================
-st.markdown(f"""
+st.markdown("""
 <style>
-/* Fullscreen Hero Background */
-.hero {{
-    background-image: url("data:image/jpg;base64,{bg_base64}");
-    background-size: cover;
-    background-position: center;
+/* ===== Remove default padding ===== */
+.main .block-container {
+    padding: 0;
+    margin: 0;
+}
+
+/* ===== Hero Section Styling ===== */
+.hero {
+    position: relative;
+    width: 100%;
     height: 100vh;
+    background-image: url("data:image/jpg;base64,{bg_base64}");
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    color: white;
-    backdrop-filter: brightness(0.5);
-    margin: -3rem -3rem 0 -3rem;
-    padding: 2rem;
-}}
-
-/* Title Styling */
-.hero h1 {{
-    font-size: 3rem;
+}
+.hero::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 0;
+}
+.hero h1 {
+    font-size: 3.2rem;
     font-weight: 900;
-    text-shadow: 2px 2px 10px rgba(0,0,0,0.7);
-    margin-bottom: 1rem;
-}}
-.hero p {{
+    color: white;
+    z-index: 1;
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+}
+.hero p {
     font-size: 1.3rem;
-    max-width: 700px;
-    text-shadow: 1px 1px 6px rgba(0,0,0,0.8);
-    margin-bottom: 1.5rem;
-}}
+    color: #f5f5f5;
+    z-index: 1;
+    margin-bottom: 1rem;
+    max-width: 600px;
+    text-shadow: 1px 1px 8px rgba(0,0,0,0.9);
+}
 
-/* Dropdown + Button Wrapper */
-.recommend-box {{
-    background: rgba(0,0,0,0.65);
-    padding: 1.5rem;
-    border-radius: 10px;
-    display: inline-block;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-}}
+/* ===== Recommendation Box ===== */
+.recommend-box {
+    z-index: 1;
+    background: rgba(20,20,20,0.8);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.7);
+    width: 90%;
+    max-width: 500px;
+    margin-top: 10px;
+}
 
-/* Button Styling */
-.hero-btn {{
-    margin-top: 1rem;
+/* ===== Dropdown Styling ===== */
+.stSelectbox > div > div {
+    background-color: #222;
+    border-radius: 8px;
+    color: white;
+}
+
+/* ===== Button Styling ===== */
+.stButton>button {
     background-color: #E50914;
     color: white;
-    font-weight: 700;
+    font-weight: bold;
+    border-radius: 6px;
     font-size: 18px;
-    border-radius: 8px;
-    padding: 0.6rem 1.8rem;
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.3s ease;
-}}
-.hero-btn:hover {{
+    padding: 0.6rem 1.5rem;
+    transition: all 0.2s ease-in-out;
+}
+.stButton>button:hover {
     background-color: #f40612;
     transform: scale(1.05);
-}}
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -93,6 +110,7 @@ MOVIES_ID = "1BjOlqZBEzu4OURzgGpdmySc3oF33DGxW"
 SIMILARITY_ID = "1rcTm8ewOzWXGEe5blo9yjxEA065MSx5A"
 
 def download_pickle(gdrive_id, filename):
+    """Download and validate pickle from Google Drive."""
     if os.path.exists(filename):
         try:
             with open(filename, "rb") as f:
@@ -102,7 +120,7 @@ def download_pickle(gdrive_id, filename):
                     os.remove(filename)
         except:
             pass
-    with st.spinner(f"Downloading {filename}..."):
+    with st.spinner(f"Downloading {filename} from Google Drive..."):
         try:
             url = f"https://drive.google.com/uc?id={gdrive_id}"
             gdown.download(url, filename, quiet=False)
@@ -113,6 +131,7 @@ def download_pickle(gdrive_id, filename):
             with open(filename, "rb") as f:
                 if not f.read(10).startswith(b'\x80'):
                     os.remove(filename)
+                    st.error(f"{filename} is not a valid pickle file.")
                     return None
         except:
             return None
@@ -122,16 +141,16 @@ movies_file = download_pickle(MOVIES_ID, "movies.pkl")
 similarity_file = download_pickle(SIMILARITY_ID, "similarity.pkl")
 
 if not movies_file or not similarity_file:
-    st.warning("Could not download data automatically. Please upload the files manually.")
+    st.warning("Downloads failed. Please upload pickle files manually.")
     uploaded_movies = st.file_uploader("Upload movies.pkl", type="pkl")
     uploaded_similarity = st.file_uploader("Upload similarity.pkl", type="pkl")
     if uploaded_movies and uploaded_similarity:
-        movies_file = "movies_uploaded.pkl"
-        with open(movies_file, "wb") as f:
+        with open("movies_uploaded.pkl", "wb") as f:
             f.write(uploaded_movies.getbuffer())
-        similarity_file = "similarity_uploaded.pkl"
-        with open(similarity_file, "wb") as f:
+        with open("similarity_uploaded.pkl", "wb") as f:
             f.write(uploaded_similarity.getbuffer())
+        movies_file = "movies_uploaded.pkl"
+        similarity_file = "similarity_uploaded.pkl"
     else:
         st.stop()
 
@@ -150,57 +169,50 @@ except Exception as e:
 OMDB_API_KEY = "b95f82c7"
 DEFAULT_POSTER = "https://via.placeholder.com/500x750?text=No+Poster"
 
-def fetch_poster(title):
-    try:
-        encoded_title = requests.utils.quote(title)
-        url = f"http://www.omdbapi.com/?t={encoded_title}&apikey={OMDB_API_KEY}"
-        data = requests.get(url, timeout=10).json()
-        if data.get("Response") == "True":
-            poster = data.get("Poster")
-            return poster if poster and poster != "N/A" else DEFAULT_POSTER
-    except:
-        pass
+def fetch_poster(title, retries=3):
+    for _ in range(retries):
+        try:
+            encoded_title = requests.utils.quote(title)
+            url = f"http://www.omdbapi.com/?t={encoded_title}&apikey={OMDB_API_KEY}"
+            r = requests.get(url, timeout=10).json()
+            if r.get("Response") == "True":
+                poster = r.get("Poster")
+                return poster if poster and poster != "N/A" else DEFAULT_POSTER
+        except:
+            time.sleep(1)
     return DEFAULT_POSTER
 
+def recommend(movie):
+    try:
+        idx = movies[movies['title'] == movie].index[0]
+        distances = similarity[idx]
+        top_indices = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
+        return [movies.iloc[i].title for i, _ in top_indices], [fetch_poster(movies.iloc[i].title) for i, _ in top_indices]
+    except:
+        return [], []
+
 # =========================
-# HERO SECTION WITH DROPDOWN
+# HERO SECTION + UI
 # =========================
 st.markdown('<div class="hero">', unsafe_allow_html=True)
-st.markdown("<h1>🎬 CineMatch</h1>", unsafe_allow_html=True)
+st.markdown("<h1>🍿 CineMatch</h1>", unsafe_allow_html=True)
 st.markdown("<p>Find your next favorite movie instantly — just pick one you like.</p>", unsafe_allow_html=True)
+st.markdown('<div class="recommend-box">', unsafe_allow_html=True)
 
 movie_list = movies['title'].values
-selected_movie = st.selectbox("Choose a movie you like:", movie_list, key="hero-dropdown", label_visibility="collapsed")
+selected_movie = st.selectbox("Choose a movie", movie_list, key="hero-dropdown", label_visibility="collapsed")
 
-if st.button("🎥 Get Recommendations", key="hero-button"):
-    names, posters = [], []
-    idx = movies[movies['title'] == selected_movie].index[0]
-    distances = similarity[idx]
-    top_indices = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
-    for i, _ in top_indices:
-        names.append(movies.iloc[i].title)
-        posters.append(fetch_poster(movies.iloc[i].title))
-
-    st.markdown("</div>", unsafe_allow_html=True)  # close hero div
+if st.button("🎥 Get Recommendations"):
+    names, posters = recommend(selected_movie)
+    st.markdown("</div></div>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align:center; margin-top:2rem;'>Recommended for You</h3>", unsafe_allow_html=True)
-    cols = st.columns(len(names))
-    for i, col in enumerate(cols):
-        with col:
-            st.image(posters[i], use_container_width=True)
-            st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
+    if names:
+        cols = st.columns(len(names))
+        for i, col in enumerate(cols):
+            with col:
+                st.image(posters[i], use_container_width=True)
+                st.markdown(f"<p style='text-align:center; font-weight:bold;'>{names[i]}</p>", unsafe_allow_html=True)
+    else:
+        st.warning("No recommendations available.")
 else:
-    st.markdown("</div>", unsafe_allow_html=True)  # close hero div
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    st.markdown("</div></div>", unsafe_allow_html=True)
